@@ -7,12 +7,15 @@ import clavedicotomica.leerJson;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import clavedicotomica.Arbol;
+import clavedicotomica.TablaDispersion;
 /**
  *
  * @author jesus
  */
 public class Inicio extends javax.swing.JFrame {
-
+    private Arbol arbol; // Árbol para la clave dicotómica
+    private TablaDispersion tabla; // Tabla de dispersión para las especies
     /**
      * Creates new form Inicio
      */
@@ -115,42 +118,47 @@ public class Inicio extends javax.swing.JFrame {
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
           
             // Crear una instancia de JFileChooser
-    JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = new JFileChooser();
 
-    // Mostrar el diálogo para abrir un archivo
-    int seleccion = fileChooser.showOpenDialog(null);
+        // Mostrar el diálogo para abrir un archivo
+        int seleccion = fileChooser.showOpenDialog(null);
 
-    // Verificar si el usuario seleccionó un archivo
-    if (seleccion == JFileChooser.APPROVE_OPTION) {
-        // Obtener el archivo seleccionado
-        File archivoSeleccionado = fileChooser.getSelectedFile();
+        // Verificar si el usuario seleccionó un archivo
+        if (seleccion == JFileChooser.APPROVE_OPTION) {
+            // Obtener el archivo seleccionado
+            File archivoSeleccionado = fileChooser.getSelectedFile();
 
-        // Obtener la extensión del archivo
-        String nombreArchivo = archivoSeleccionado.getName();
-        String extension = "";
+            // Obtener la extensión del archivo
+            String nombreArchivo = archivoSeleccionado.getName();
+            String extension = "";
 
-        // Obtener la extensión del archivo
-        int i = nombreArchivo.lastIndexOf('.');
-        if (i > 0) {
-            extension = nombreArchivo.substring(i + 1).toLowerCase();
-        }
+            // Obtener la extensión del archivo
+            int i = nombreArchivo.lastIndexOf('.');
+            if (i > 0) {
+                extension = nombreArchivo.substring(i + 1).toLowerCase();
+            }
 
-        // Verificar si la extensión es "json"
-        if ("json".equals(extension)) {
-            // Mostrar la ruta del archivo seleccionado
+            // Verificar si la extensión es "json"
+            if ("json".equals(extension)) {
+                // Mostrar la ruta del archivo seleccionado
+                JOptionPane.showMessageDialog(this, "Archivo seleccionado: " + archivoSeleccionado.getAbsolutePath(), "Cargar Json", JOptionPane.INFORMATION_MESSAGE);
 
-            JOptionPane.showMessageDialog(this, "Archivo seleccionado" + archivoSeleccionado.getAbsolutePath(), "Cargar Json", JOptionPane.INFORMATION_MESSAGE);
+                // Construir el árbol y la tabla de dispersión
+                tabla = new TablaDispersion();
+                arbol = leerJson.construirArbol(archivoSeleccionado, tabla);
 
-            // Llamar al método leerArchivoJson de la clase leerJson
-            leerJson.leerArchivoJson(archivoSeleccionado);
+                if (arbol != null) {
+                    JOptionPane.showMessageDialog(this, "Árbol y tabla de dispersión construidos correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al construir el árbol.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                // Mostrar un mensaje de error si el archivo no es JSON
+                JOptionPane.showMessageDialog(this, "El archivo seleccionado no es un archivo JSON.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         } else {
-            // Mostrar un mensaje de error si el archivo no es JSON
-            JOptionPane.showMessageDialog(this, "El archivo seleccionado no es un archivo JSON.", "Error", JOptionPane.ERROR_MESSAGE);
-            
+            JOptionPane.showMessageDialog(this, "No se ha seleccionado ningún archivo.", "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } else {
-        JOptionPane.showMessageDialog(this, "No se ha selecionado ningun archivo", "Error", JOptionPane.ERROR_MESSAGE);
-    }
 
 
     }//GEN-LAST:event_cargarJsonActionPerformed
