@@ -2,6 +2,7 @@ package clavedicotomica;
 
 import ventanaInicio.Inicio;
 
+
 public class ClaveDicotomica {
 
 

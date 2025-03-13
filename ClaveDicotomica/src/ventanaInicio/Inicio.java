@@ -3,8 +3,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package ventanaInicio;
+import clavedicotomica.leerJson;
 import java.io.File;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 /**
  *
  * @author jesus
@@ -112,23 +114,44 @@ public class Inicio extends javax.swing.JFrame {
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
           
-        // Crear una instancia de JFileChooser
-        JFileChooser fileChooser = new JFileChooser();
+            // Crear una instancia de JFileChooser
+    JFileChooser fileChooser = new JFileChooser();
 
-        // Mostrar el diálogo para abrir un archivo
-        int seleccion = fileChooser.showOpenDialog(null);
+    // Mostrar el diálogo para abrir un archivo
+    int seleccion = fileChooser.showOpenDialog(null);
 
-        // Verificar si el usuario seleccionó un archivo
-        if (seleccion == JFileChooser.APPROVE_OPTION) {
-            // Obtener el archivo seleccionado
-            File archivoSeleccionado = fileChooser.getSelectedFile();
+    // Verificar si el usuario seleccionó un archivo
+    if (seleccion == JFileChooser.APPROVE_OPTION) {
+        // Obtener el archivo seleccionado
+        File archivoSeleccionado = fileChooser.getSelectedFile();
 
+        // Obtener la extensión del archivo
+        String nombreArchivo = archivoSeleccionado.getName();
+        String extension = "";
+
+        // Obtener la extensión del archivo
+        int i = nombreArchivo.lastIndexOf('.');
+        if (i > 0) {
+            extension = nombreArchivo.substring(i + 1).toLowerCase();
+        }
+
+        // Verificar si la extensión es "json"
+        if ("json".equals(extension)) {
             // Mostrar la ruta del archivo seleccionado
-            System.out.println("Archivo seleccionado: " + archivoSeleccionado.getAbsolutePath());
+
+            JOptionPane.showMessageDialog(this, "Archivo seleccionado" + archivoSeleccionado.getAbsolutePath(), "Cargar Json", JOptionPane.INFORMATION_MESSAGE);
+
+            // Llamar al método leerArchivoJson de la clase leerJson
+            leerJson.leerArchivoJson(archivoSeleccionado);
         } else {
-            System.out.println("No se seleccionó ningún archivo.");
-        
+            // Mostrar un mensaje de error si el archivo no es JSON
+            JOptionPane.showMessageDialog(this, "El archivo seleccionado no es un archivo JSON.", "Error", JOptionPane.ERROR_MESSAGE);
+            
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "No se ha selecionado ningun archivo", "Error", JOptionPane.ERROR_MESSAGE);
     }
+
 
     }//GEN-LAST:event_cargarJsonActionPerformed
 
