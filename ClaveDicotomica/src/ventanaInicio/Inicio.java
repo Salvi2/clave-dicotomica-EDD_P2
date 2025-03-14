@@ -9,6 +9,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import clavedicotomica.Arbol;
 import clavedicotomica.TablaDispersion;
+import clavedicotomica.GraficoArbol;
+import clavedicotomica.Nodo;
 /**
  *
  * @author jesus
@@ -112,7 +114,13 @@ public class Inicio extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void GrafoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GrafoActionPerformed
-        // TODO add your handling code here:
+        if (arbol != null) {
+            GraficoArbol.mostrarArbol(arbol.getRaiz());
+        } else {
+            JOptionPane.showMessageDialog(this, "Primero carga un archivo JSON.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+        }
+    
+
     }//GEN-LAST:event_GrafoActionPerformed
 
     private void cargarJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarJsonActionPerformed
@@ -164,7 +172,60 @@ public class Inicio extends javax.swing.JFrame {
     }//GEN-LAST:event_cargarJsonActionPerformed
 
     private void determinarEspecieActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_determinarEspecieActionPerformed
-        // TODO add your handling code here:
+        if (arbol == null) {
+        JOptionPane.showMessageDialog(this, "Primero carga un archivo JSON.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    // Comenzar desde la raíz
+    Nodo nodoActual = arbol.getRaiz();
+    
+    // Mientras no se llegue a una hoja (especie)
+    while (nodoActual != null && nodoActual.getEspecie() == null) {
+        // Mostrar la pregunta actual
+        int respuesta = JOptionPane.showConfirmDialog(
+            this,
+            nodoActual.getPregunta(),
+            "Determinar Especie",
+            JOptionPane.YES_NO_OPTION
+        );
+        
+        // Avanzar según la respuesta
+        if (respuesta == JOptionPane.YES_OPTION) {
+            nodoActual = nodoActual.getSi();
+        } else {
+            nodoActual = nodoActual.getNo();
+        }
+        
+        // Verificar si se llegó a un nodo nulo (camino incompleto)
+        if (nodoActual == null) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo determinar la especie. El árbol está incompleto.",
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+    }
+    
+    // Mostrar la especie encontrada
+    if (nodoActual != null && nodoActual.getEspecie() != null) {
+        JOptionPane.showMessageDialog(
+            this,
+            "La especie determinada es: " + nodoActual.getEspecie(),
+            "Especie Encontrada",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    } else {
+        JOptionPane.showMessageDialog(
+            this,
+            "No se pudo determinar la especie.",
+            "Error",
+            JOptionPane.ERROR_MESSAGE
+        );
+    }
+
     }//GEN-LAST:event_determinarEspecieActionPerformed
 
     private void buscarEspecieActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buscarEspecieActionPerformed
