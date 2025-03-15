@@ -1,137 +1,316 @@
 package clavedicotomica;
 
-import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
-import org.graphstream.graph.implementations.SingleGraph;
-import org.graphstream.ui.view.Viewer;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
 /**
- * Clase para mostrar gráficamente el árbol de la clave dicotómica.
+ * Clase para mostrar gráficamente el árbol de la clave dicotómica
+ *
  */
 public class GraficoArbol {
-    private static int contadorId = 0; // Contador para generar IDs únicos
-
+    
+    private static final int ANCHO_NODO = 120;
+    private static final int ALTO_NODO = 50;
+    private static final int ESPACIO_HORIZONTAL = 350;
+    private static final int ESPACIO_VERTICAL = 80;
+    private static final Color COLOR_NODO = new Color(100, 149, 237); // Azul acero claro
+    private static final Color COLOR_NODO_ESPECIE = new Color(50, 205, 50); // Verde lima
+    private static final Color COLOR_LINEA_SI = new Color(34, 139, 34); // Verde bosque
+    private static final Color COLOR_LINEA_NO = new Color(178, 34, 34); // Rojo ladrillo
+    
     /**
      * Muestra el árbol de la clave dicotómica en una ventana gráfica.
      *
      * @param raiz La raíz del árbol que se desea visualizar.
      */
     public static void mostrarArbol(Nodo raiz) {
-        // Reiniciar el contador de IDs para cada nueva visualización
-        contadorId = 0;
-        
         // Verificar si el árbol está vacío
         if (raiz == null) {
-            System.err.println("El árbol está vacío. No hay nada que mostrar.");
+            JOptionPane.showMessageDialog(null, 
+                "El árbol está vacío. No hay nada que mostrar.", 
+                "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        try {
-            // Configurar la propiedad para renderizar con JavaFX
-            System.setProperty("org.graphstream.ui", "javafx");
-            
-            // Crear un nuevo grafo
-            Graph graph = new SingleGraph("Clave Dicotómica");
-
-            // Configurar el estilo del grafo
-            graph.setAttribute("ui.stylesheet", 
-                "node { fill-color: #6495ED; text-size: 14px; size: 30px; text-color: black; text-style: bold; }" +
-                "edge { fill-color: #4682B4; size: 2px; }" +
-                "edge.si { fill-color: #228B22; }" +
-                "edge.no { fill-color: #B22222; }");
-
-            // Crear los nodos del árbol en el grafo
-            construirGrafo(graph, raiz);
-
-            // Verificar si el grafo tiene nodos
-            if (graph.getNodeCount() == 0) {
-                System.err.println("El grafo no tiene nodos. Verifica la estructura del árbol.");
-                return;
+        // Crear una nueva ventana
+        JFrame frame = new JFrame("Visualizador de Clave Dicotómica");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(1000, 700);
+        
+        // Calcular profundidad del árbol para dimensionar el panel
+        int profundidad = calcularProfundidad(raiz);
+        int anchura = calcularAnchuraMaxima(raiz);
+        
+        // Crear un panel para dibujar el árbol
+        PanelArbol panel = new PanelArbol(raiz, profundidad, anchura);
+        
+        // Agregar el panel a un ScrollPane para permitir desplazamiento
+        JScrollPane scrollPane = new JScrollPane(panel);
+        scrollPane.setPreferredSize(new Dimension(950, 650));
+        
+        // Agregar botones de zoom
+        JButton zoomInButton = new JButton("Zoom +");
+        JButton zoomOutButton = new JButton("Zoom -");
+        JButton resetButton = new JButton("Reset Zoom");
+        
+        zoomInButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panel.zoomIn();
             }
-
-            // Crear un visor para el grafo usando JavaFX
-            Viewer viewer = graph.display();
-            viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
-            
-        } catch (Exception e) {
-            System.err.println("Error al mostrar el árbol: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Método para construir el grafo a partir del árbol.
-     * 
-     * @param graph El grafo donde se construirán los nodos.
-     * @param raiz La raíz del árbol.
-     */
-    private static void construirGrafo(Graph graph, Nodo raiz) {
-        // Crear nodo raíz
-        String idRaiz = "nodo_" + contadorId++;
-        Node nodoRaiz = graph.addNode(idRaiz);
+        });
         
-        // Establecer etiqueta del nodo
-        if (raiz.getEspecie() != null) {
-            nodoRaiz.setAttribute("ui.label", raiz.getEspecie());
-            nodoRaiz.setAttribute("ui.style", "fill-color: #32CD32;");
-        } else {
-            nodoRaiz.setAttribute("ui.label", raiz.getPregunta());
-        }
+        zoomOutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panel.zoomOut();
+            }
+        });
         
-        // Recursivamente construir el árbol
-        construirSubArbol(graph, raiz, idRaiz);
+        resetButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panel.resetZoom();
+            }
+        });
+        
+        // Panel para los botones
+        JPanel botonesPanel = new JPanel();
+        botonesPanel.add(zoomInButton);
+        botonesPanel.add(zoomOutButton);
+        botonesPanel.add(resetButton);
+        
+        // Agregar elementos al frame
+        frame.setLayout(new BorderLayout());
+        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(botonesPanel, BorderLayout.SOUTH);
+        
+        // Centrar la ventana y hacerla visible
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
     
     /**
-     * Método recursivo para construir el subárbol.
-     * 
-     * @param graph El grafo donde se construirán los nodos.
-     * @param nodoActual El nodo actual del árbol.
-     * @param idPadre El ID del nodo padre en el grafo.
+     * Calcula la profundidad máxima del árbol.
      */
-    private static void construirSubArbol(Graph graph, Nodo nodoActual, String idPadre) {
-        // Construir subárbol SI
-        if (nodoActual.getSi() != null) {
-            String idSi = "nodo_" + contadorId++;
-            Node nodoSi = graph.addNode(idSi);
-            
-            if (nodoActual.getSi().getEspecie() != null) {
-                nodoSi.setAttribute("ui.label", nodoActual.getSi().getEspecie());
-                nodoSi.setAttribute("ui.style", "fill-color: #32CD32;");
-            } else {
-                nodoSi.setAttribute("ui.label", nodoActual.getSi().getPregunta());
+    private static int calcularProfundidad(Nodo nodo) {
+        if (nodo == null) {
+            return 0;
+        }
+        return 1 + Math.max(calcularProfundidad(nodo.getSi()), calcularProfundidad(nodo.getNo()));
+    }
+    
+    /**
+     * Calcula la anchura máxima del árbol (cantidad máxima de nodos en un nivel).
+     */
+    private static int calcularAnchuraMaxima(Nodo raiz) {
+        int[] anchuras = new int[50]; // Suponemos un máximo de 50 niveles
+        calcularAnchurasPorNivel(raiz, 0, anchuras);
+        
+        int maxAnchura = 0;
+        for (int anchura : anchuras) {
+            if (anchura > maxAnchura) {
+                maxAnchura = anchura;
             }
-            
-            // Crear arista SI
-            String idArista = idPadre + "-" + idSi;
-            graph.addEdge(idArista, idPadre, idSi, true);
-            graph.getEdge(idArista).setAttribute("ui.label", "Sí");
-            graph.getEdge(idArista).setAttribute("ui.class", "si");
-            
-            // Recursivamente construir subárbol SI
-            construirSubArbol(graph, nodoActual.getSi(), idSi);
+        }
+        return maxAnchura;
+    }
+    
+    /**
+     * Calcula la cantidad de nodos por nivel.
+     */
+    private static void calcularAnchurasPorNivel(Nodo nodo, int nivel, int[] anchuras) {
+        if (nodo == null) {
+            return;
         }
         
-        // Construir subárbol NO
-        if (nodoActual.getNo() != null) {
-            String idNo = "nodo_" + contadorId++;
-            Node nodoNo = graph.addNode(idNo);
+        anchuras[nivel]++;
+        
+        calcularAnchurasPorNivel(nodo.getSi(), nivel + 1, anchuras);
+        calcularAnchurasPorNivel(nodo.getNo(), nivel + 1, anchuras);
+    }
+    
+    /**
+     * Panel para dibujar el árbol.
+     */
+    private static class PanelArbol extends JPanel {
+        private Nodo raiz;
+        private int profundidad;
+        private int anchura;
+        private double escala = 1.0;
+        private int desplazamientoX = 0;
+        private int desplazamientoY = 0;
+        private Point puntoArrastre;
+        
+        public PanelArbol(Nodo raiz, int profundidad, int anchura) {
+            this.raiz = raiz;
+            this.profundidad = profundidad;
+            this.anchura = anchura;
             
-            if (nodoActual.getNo().getEspecie() != null) {
-                nodoNo.setAttribute("ui.label", nodoActual.getNo().getEspecie());
-                nodoNo.setAttribute("ui.style", "fill-color: #32CD32;");
-            } else {
-                nodoNo.setAttribute("ui.label", nodoActual.getNo().getPregunta());
+            // Calcular dimensiones del panel
+            int anchoPanel = Math.max(1000, anchura * (ANCHO_NODO + ESPACIO_HORIZONTAL));
+            int altoPanel = Math.max(700, profundidad * (ALTO_NODO + ESPACIO_VERTICAL) + 100);
+            setPreferredSize(new Dimension(anchoPanel, altoPanel));
+            
+            // Agregar listeners para permitir arrastrar el árbol
+            MouseAdapter mouseAdapter = new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    puntoArrastre = e.getPoint();
+                }
+                
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    puntoArrastre = null;
+                }
+                
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    if (puntoArrastre != null) {
+                        int dx = e.getX() - puntoArrastre.x;
+                        int dy = e.getY() - puntoArrastre.y;
+                        desplazamientoX += dx;
+                        desplazamientoY += dy;
+                        puntoArrastre = e.getPoint();
+                        repaint();
+                    }
+                }
+            };
+            
+            addMouseListener(mouseAdapter);
+            addMouseMotionListener(mouseAdapter);
+        }
+        
+        public void zoomIn() {
+            escala *= 1.1;
+            repaint();
+        }
+        
+        public void zoomOut() {
+            escala /= 1.1;
+            repaint();
+        }
+        
+        public void resetZoom() {
+            escala = 1.0;
+            desplazamientoX = 0;
+            desplazamientoY = 0;
+            repaint();
+        }
+        
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            
+            // Activar antialiasing para mejorar la calidad visual
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Aplicar escala y desplazamiento
+            g2d.translate(desplazamientoX, desplazamientoY);
+            g2d.scale(escala, escala);
+            
+            // Dibujar el árbol
+            if (raiz != null) {
+                int x = getWidth() / 2;
+                int y = 50;
+                dibujarNodo(g2d, raiz, x, y, getWidth() / 4);
+            }
+        }
+        
+        /**
+         * Dibuja un nodo del árbol y sus hijos recursivamente.
+         */
+        private void dibujarNodo(Graphics2D g2d, Nodo nodo, int x, int y, int desplazamiento) {
+            if (nodo == null) return;
+            
+            // Determinar color del nodo
+            Color colorNodo = nodo.getEspecie() != null ? COLOR_NODO_ESPECIE : COLOR_NODO;
+            
+            // Dibujar el nodo
+            g2d.setColor(colorNodo);
+            g2d.fillRoundRect(x - ANCHO_NODO / 2, y, ANCHO_NODO, ALTO_NODO, 20, 20);
+            g2d.setColor(Color.BLACK);
+            g2d.drawRoundRect(x - ANCHO_NODO / 2, y, ANCHO_NODO, ALTO_NODO, 20, 20);
+            
+            // Dibujar el texto del nodo
+            g2d.setFont(new Font("Arial", Font.BOLD, 12));
+            String texto = nodo.getEspecie() != null ? nodo.getEspecie() : nodo.getPregunta();
+            dibujarTextoMultilinea(g2d, texto, x, y + 20);
+            
+            // Dibujar líneas y nodos hijos
+            int siguienteY = y + ALTO_NODO + ESPACIO_VERTICAL;
+            
+            // Dibujar hijo SI
+            if (nodo.getSi() != null) {
+                int hijoX = x - desplazamiento;
+                
+                // Dibujar línea
+                g2d.setColor(COLOR_LINEA_SI);
+                g2d.drawLine(x, y + ALTO_NODO, hijoX, siguienteY);
+                
+                // Dibujar etiqueta "Sí"
+                g2d.setFont(new Font("Arial", Font.BOLD, 14));
+                g2d.drawString("Sí", (x + hijoX) / 2 - 10, y + ALTO_NODO + (ESPACIO_VERTICAL / 2));
+                
+                // Dibujar nodo hijo
+                dibujarNodo(g2d, nodo.getSi(), hijoX, siguienteY, desplazamiento / 2);
             }
             
-            // Crear arista NO
-            String idArista = idPadre + "-" + idNo;
-            graph.addEdge(idArista, idPadre, idNo, true);
-            graph.getEdge(idArista).setAttribute("ui.label", "No");
-            graph.getEdge(idArista).setAttribute("ui.class", "no");
+            // Dibujar hijo NO
+            if (nodo.getNo() != null) {
+                int hijoX = x + desplazamiento;
+                
+                // Dibujar línea
+                g2d.setColor(COLOR_LINEA_NO);
+                g2d.drawLine(x, y + ALTO_NODO, hijoX, siguienteY);
+                
+                // Dibujar etiqueta "No"
+                g2d.setFont(new Font("Arial", Font.BOLD, 14));
+                g2d.drawString("No", (x + hijoX) / 2 - 10, y + ALTO_NODO + (ESPACIO_VERTICAL / 2));
+                
+                // Dibujar nodo hijo
+                dibujarNodo(g2d, nodo.getNo(), hijoX, siguienteY, desplazamiento / 2);
+            }
+        }
+        
+        /**
+         * Dibuja texto multililínea dentro de un nodo.
+         */
+        private void dibujarTextoMultilinea(Graphics2D g2d, String texto, int x, int y) {
+            // Dividir el texto en líneas si es muy largo
+            FontMetrics fm = g2d.getFontMetrics();
+            int anchoMax = ANCHO_NODO - 10;
             
-            // Recursivamente construir subárbol NO
-            construirSubArbol(graph, nodoActual.getNo(), idNo);
+            if (texto == null) {
+                return;
+            }
+            
+            // Acortar el texto si es demasiado largo
+            if (texto.length() > 70) {
+                texto = texto.substring(0, 67) + "...";
+            }
+            
+            // Dividir el texto en líneas
+            String[] palabras = texto.split(" ");
+            String lineaActual = "";
+            int lineaY = y;
+            
+            for (String palabra : palabras) {
+                if (fm.stringWidth(lineaActual + palabra) < anchoMax) {
+                    lineaActual += palabra + " ";
+                } else {
+                    g2d.drawString(lineaActual, x - fm.stringWidth(lineaActual) / 2, lineaY);
+                    lineaActual = palabra + " ";
+                    lineaY += fm.getHeight();
+                }
+            }
+            
+            // Dibujar la última línea
+            if (!lineaActual.isEmpty()) {
+                g2d.drawString(lineaActual, x - fm.stringWidth(lineaActual) / 2, lineaY);
+            }
         }
     }
 }
