@@ -5,8 +5,8 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
- * Clase para mostrar gráficamente el árbol de la clave dicotómica
- *
+ * Clase que proporciona una representación gráfica del árbol de la clave dicotómica.
+ * Permite visualizar el árbol en una ventana con funcionalidades de zoom y desplazamiento.
  */
 public class GraficoArbol {
     
@@ -93,6 +93,8 @@ public class GraficoArbol {
     
     /**
      * Calcula la profundidad máxima del árbol.
+     *
+     * @param nodo El nodo desde el cual se calcula la profundidad.
      */
     private static int calcularProfundidad(Nodo nodo) {
         if (nodo == null) {
@@ -103,6 +105,9 @@ public class GraficoArbol {
     
     /**
      * Calcula la anchura máxima del árbol (cantidad máxima de nodos en un nivel).
+     *
+     * @param raiz La raíz del árbol.
+     * @return La anchura máxima del árbol.
      */
     private static int calcularAnchuraMaxima(Nodo raiz) {
         int[] anchuras = new int[50]; // Suponemos un máximo de 50 niveles
@@ -119,6 +124,10 @@ public class GraficoArbol {
     
     /**
      * Calcula la cantidad de nodos por nivel.
+     *
+     * @param nodo El nodo actual.
+     * @param nivel El nivel actual en el árbol.
+     * @param anchuras Un arreglo que almacena la cantidad de nodos por nivel.
      */
     private static void calcularAnchurasPorNivel(Nodo nodo, int nivel, int[] anchuras) {
         if (nodo == null) {
@@ -132,7 +141,7 @@ public class GraficoArbol {
     }
     
     /**
-     * Panel para dibujar el árbol.
+     * Panel interno para dibujar el árbol.
      */
     private static class PanelArbol extends JPanel {
         private Nodo raiz;
@@ -143,6 +152,13 @@ public class GraficoArbol {
         private int desplazamientoY = 0;
         private Point puntoArrastre;
         
+        /**
+         * Constructor del panel que dibuja el árbol.
+         *
+         * @param raiz La raíz del árbol.
+         * @param profundidad La profundidad del árbol.
+         * @param anchura La anchura máxima del árbol.
+         */
         public PanelArbol(Nodo raiz, int profundidad, int anchura) {
             this.raiz = raiz;
             this.profundidad = profundidad;
@@ -182,16 +198,25 @@ public class GraficoArbol {
             addMouseMotionListener(mouseAdapter);
         }
         
+        /**
+         * Aumenta el zoom del árbol.
+         */
         public void zoomIn() {
             escala *= 1.1;
             repaint();
         }
         
+        /**
+         * Disminuye el zoom del árbol.
+         */
         public void zoomOut() {
             escala /= 1.1;
             repaint();
         }
         
+        /**
+         * Restablece el zoom y el desplazamiento del árbol.
+         */
         public void resetZoom() {
             escala = 1.0;
             desplazamientoX = 0;
@@ -276,7 +301,7 @@ public class GraficoArbol {
         }
         
         /**
-         * Dibuja texto multililínea dentro de un nodo.
+         * Dibuja texto multilínea dentro de un nodo.
          */
         private void dibujarTextoMultilinea(Graphics2D g2d, String texto, int x, int y) {
             // Dividir el texto en líneas si es muy largo

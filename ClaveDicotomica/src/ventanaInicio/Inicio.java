@@ -11,10 +11,13 @@ import clavedicotomica.Arbol;
 import clavedicotomica.TablaDispersion;
 import clavedicotomica.GraficoArbol;
 import clavedicotomica.Nodo;
+
 /**
- *
- * @author jesus
+ * Clase principal que representa la ventana de inicio de la aplicación.
+ * Esta ventana permite desde cargar el Json, mostrar el árbol de la clave dicotómica,
+ * determinar una especie y buscar una especie en el árbol.
  */
+
 public class Inicio extends javax.swing.JFrame {
     private Arbol arbol; // Árbol para la clave dicotómica
     private TablaDispersion tabla; // Tabla de dispersión para las especies
