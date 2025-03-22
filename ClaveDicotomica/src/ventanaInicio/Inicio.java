@@ -229,7 +229,199 @@ public class Inicio extends javax.swing.JFrame {
     }//GEN-LAST:event_determinarEspecieActionPerformed
 
     private void buscarEspecieActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buscarEspecieActionPerformed
-        // TODO add your handling code here:
+        if (arbol == null || tabla == null) {
+        JOptionPane.showMessageDialog(this, "Primero carga un archivo JSON.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    // Solicitar el nombre de la especie
+    String nombreEspecie = JOptionPane.showInputDialog(this, "Introduce el nombre de la especie a buscar:", "Buscar Especie", JOptionPane.QUESTION_MESSAGE);
+    
+    if (nombreEspecie == null || nombreEspecie.trim().isEmpty()) {
+        return; // Usuario canceló o no ingresó nada
+    }
+    
+    // Preguntar al usuario qué método quiere usar
+    String[] opciones = {"Buscar por Hash", "Buscar por Recorrido del Árbol"};
+    int seleccion = JOptionPane.showOptionDialog(
+        this,
+        "Selecciona el método de búsqueda:",
+        "Método de Búsqueda",
+        JOptionPane.DEFAULT_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        opciones,
+        opciones[0]
+    );
+    
+    if (seleccion == 0) {
+        // Buscar por hash
+        buscarPorHash(nombreEspecie);
+    } else if (seleccion == 1) {
+        // Buscar por recorrido del árbol
+        buscarPorRecorrido(nombreEspecie);
+    }
+}
+
+/**
+ * Busca una especie usando la tabla de dispersión (hash).
+ */
+private void buscarPorHash(String nombreEspecie) {
+    // Medir tiempo de inicio
+    long tiempoInicio = System.nanoTime();
+    
+    // Realizar la búsqueda
+    Nodo nodoEspecie = tabla.buscar(nombreEspecie);
+    
+    // Medir tiempo de fin
+    long tiempoFin = System.nanoTime();
+    
+    // Calcular tiempo transcurrido en nanosegundos y convertir a milisegundos para mejor legibilidad
+    long tiempoTranscurrido = tiempoFin - tiempoInicio;
+    double tiempoEnMilisegundos = tiempoTranscurrido / 1000000.0;
+    
+    if (nodoEspecie != null && nombreEspecie.equals(nodoEspecie.getEspecie())) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Especie encontrada en la tabla de hash: " + nombreEspecie + "\n\n" +
+            "Tiempo de búsqueda: " + tiempoEnMilisegundos + " milisegundos",
+            "Especie Encontrada",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+        
+        // Mostrar el camino de preguntas hasta esta especie
+        mostrarCaminoHastaEspecie(nombreEspecie);
+    } else {
+        JOptionPane.showMessageDialog(
+            this,
+            "La especie '" + nombreEspecie + "' no se encontró en la tabla de hash.\n\n" +
+            "Tiempo de búsqueda: " + tiempoEnMilisegundos + " milisegundos",
+            "Especie No Encontrada",
+            JOptionPane.ERROR_MESSAGE
+        );
+    }
+}
+
+/**
+ * Busca una especie recorriendo el árbol.
+ */
+private void buscarPorRecorrido(String nombreEspecie) {
+    // Estructura para almacenar el camino
+    StringBuilder camino = new StringBuilder();
+    
+    // Medir tiempo de inicio
+    long tiempoInicio = System.nanoTime();
+    
+    // Buscar la especie en el árbol mediante un recorrido
+    boolean encontrada = buscarEspecieEnArbol(arbol.getRaiz(), nombreEspecie, camino);
+    
+    // Medir tiempo de fin
+    long tiempoFin = System.nanoTime();
+    
+    // Calcular tiempo transcurrido en nanosegundos y convertir a milisegundos para mejor legibilidad
+    long tiempoTranscurrido = tiempoFin - tiempoInicio;
+    double tiempoEnMilisegundos = tiempoTranscurrido / 1000000.0;
+    
+    if (encontrada) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Especie encontrada por recorrido del árbol: " + nombreEspecie + "\n\n" +
+            "Camino para llegar a esta especie:\n" + camino.toString() + "\n\n" +
+            "Tiempo de búsqueda: " + tiempoEnMilisegundos + " milisegundos",
+            "Especie Encontrada",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    } else {
+        JOptionPane.showMessageDialog(
+            this,
+            "La especie '" + nombreEspecie + "' no se encontró en el árbol.\n\n" +
+            "Tiempo de búsqueda: " + tiempoEnMilisegundos + " milisegundos",
+            "Especie No Encontrada",
+            JOptionPane.ERROR_MESSAGE
+        );
+    }
+}
+
+/**
+ * Busca una especie en el árbol y construye el camino de preguntas hasta ella.
+ */
+private boolean buscarEspecieEnArbol(Nodo nodo, String nombreEspecie, StringBuilder camino) {
+    if (nodo == null) {
+        return false;
+    }
+    
+    // Si encontramos la especie
+    if (nodo.getEspecie() != null && nodo.getEspecie().equals(nombreEspecie)) {
+        return true;
+    }
+    
+    // Si no es una hoja, buscar en sus hijos
+    if (nodo.getPregunta() != null) {
+        // Intentar por el camino SI
+        camino.append("Pregunta: ").append(nodo.getPregunta()).append(" → Respuesta: Sí\n");
+        if (buscarEspecieEnArbol(nodo.getSi(), nombreEspecie, camino)) {
+            return true;
+        } else {
+            // Quitar la última pregunta si no encontramos por este camino
+            int ultimaLinea = camino.lastIndexOf("Pregunta: ");
+            if (ultimaLinea >= 0) {
+                camino.delete(ultimaLinea, camino.length());
+            }
+            
+            // Intentar por el camino NO
+            camino.append("Pregunta: ").append(nodo.getPregunta()).append(" → Respuesta: No\n");
+            if (buscarEspecieEnArbol(nodo.getNo(), nombreEspecie, camino)) {
+                return true;
+            } else {
+                // Quitar la última pregunta si no encontramos por este camino
+                ultimaLinea = camino.lastIndexOf("Pregunta: ");
+                if (ultimaLinea >= 0) {
+                    camino.delete(ultimaLinea, camino.length());
+                }
+                return false;
+            }
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Muestra el camino de preguntas hasta una especie usando el árbol.
+ */
+private void mostrarCaminoHastaEspecie(String nombreEspecie) {
+    StringBuilder camino = new StringBuilder();
+    
+    // Medir tiempo de inicio
+    long tiempoInicio = System.nanoTime();
+    
+    // Buscar el camino de preguntas
+    boolean encontrado = buscarEspecieEnArbol(arbol.getRaiz(), nombreEspecie, camino);
+    
+    // Medir tiempo de fin
+    long tiempoFin = System.nanoTime();
+    
+    // Calcular tiempo transcurrido
+    long tiempoTranscurrido = tiempoFin - tiempoInicio;
+    double tiempoEnMilisegundos = tiempoTranscurrido / 1000000.0;
+    
+    if (encontrado) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Camino para llegar a esta especie:\n" + camino.toString() + "\n\n" +
+            "Tiempo de búsqueda del camino: " + tiempoEnMilisegundos + " milisegundos",
+            "Camino de Preguntas",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    } else {
+        JOptionPane.showMessageDialog(
+            this,
+            "No se pudo determinar el camino de preguntas.\n\n" +
+            "Tiempo de búsqueda: " + tiempoEnMilisegundos + " milisegundos",
+            "Error",
+            JOptionPane.ERROR_MESSAGE
+        );
+    }
     }//GEN-LAST:event_buscarEspecieActionPerformed
 
     /**
