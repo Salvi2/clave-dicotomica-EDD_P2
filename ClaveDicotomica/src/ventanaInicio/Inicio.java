@@ -229,7 +229,7 @@ public class Inicio extends javax.swing.JFrame {
     }//GEN-LAST:event_determinarEspecieActionPerformed
 
     private void buscarEspecieActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buscarEspecieActionPerformed
-        if (arbol == null || tabla == null) {
+    if (arbol == null || tabla == null) {
         JOptionPane.showMessageDialog(this, "Primero carga un archivo JSON.", "Advertencia", JOptionPane.WARNING_MESSAGE);
         return;
     }
@@ -240,6 +240,9 @@ public class Inicio extends javax.swing.JFrame {
     if (nombreEspecie == null || nombreEspecie.trim().isEmpty()) {
         return; // Usuario canceló o no ingresó nada
     }
+    
+    // Capitalizar la primera letra del nombre de la especie
+    nombreEspecie = capitalizarPrimeraLetra(nombreEspecie);
     
     // Preguntar al usuario qué método quiere usar
     String[] opciones = {"Buscar por Hash", "Buscar por Recorrido del Árbol"};
@@ -261,6 +264,14 @@ public class Inicio extends javax.swing.JFrame {
         // Buscar por recorrido del árbol
         buscarPorRecorrido(nombreEspecie);
     }
+}
+
+// Método para capitalizar la primera letra de un String
+private String capitalizarPrimeraLetra(String str) {
+    if (str == null || str.isEmpty()) {
+        return str;
+    }
+    return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
 }
 
 /**
